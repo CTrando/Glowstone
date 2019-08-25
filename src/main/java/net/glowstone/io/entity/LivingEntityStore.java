@@ -11,7 +11,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import net.glowstone.entity.AttributeManager;
 import net.glowstone.entity.AttributeManager.Property;
-import net.glowstone.entity.GlowLivingEntity;
+import net.glowstone.entity.livingentity.GlowLivingEntity;
 import net.glowstone.entity.objects.GlowLeashHitch;
 import net.glowstone.io.nbt.NbtSerialization;
 import net.glowstone.util.InventoryUtil;

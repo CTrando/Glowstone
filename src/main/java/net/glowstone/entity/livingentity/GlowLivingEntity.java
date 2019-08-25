@@ -1,22 +1,6 @@
-package net.glowstone.entity;
-
-import static java.lang.Math.cos;
-import static java.lang.Math.sin;
+package net.glowstone.entity.livingentity;
 
 import com.flowpowered.network.Message;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import net.glowstone.EventFactory;
@@ -24,73 +8,48 @@ import net.glowstone.GlowWorld;
 import net.glowstone.block.GlowBlock;
 import net.glowstone.block.ItemTable;
 import net.glowstone.block.blocktype.BlockType;
-import net.glowstone.constants.GameRules;
 import net.glowstone.constants.GlowPotionEffect;
+import net.glowstone.entity.AttributeManager;
 import net.glowstone.entity.AttributeManager.Key;
+import net.glowstone.entity.GlowEntity;
+import net.glowstone.entity.GlowPlayer;
 import net.glowstone.entity.ai.MobState;
 import net.glowstone.entity.ai.TaskManager;
 import net.glowstone.entity.meta.MetadataIndex;
-import net.glowstone.entity.monster.GlowSlime;
-import net.glowstone.entity.objects.GlowExperienceOrb;
 import net.glowstone.entity.objects.GlowLeashHitch;
-import net.glowstone.entity.passive.GlowWolf;
 import net.glowstone.entity.projectile.GlowProjectile;
 import net.glowstone.inventory.EquipmentMonitor;
 import net.glowstone.net.GlowSession;
-import net.glowstone.net.message.play.entity.AnimateEntityMessage;
-import net.glowstone.net.message.play.entity.EntityEffectMessage;
-import net.glowstone.net.message.play.entity.EntityEquipmentMessage;
-import net.glowstone.net.message.play.entity.EntityHeadRotationMessage;
-import net.glowstone.net.message.play.entity.EntityRemoveEffectMessage;
+import net.glowstone.net.message.play.entity.*;
 import net.glowstone.net.message.play.player.InteractEntityMessage;
 import net.glowstone.net.message.play.player.InteractEntityMessage.Action;
-import net.glowstone.util.ExperienceSplitter;
 import net.glowstone.util.InventoryUtil;
 import net.glowstone.util.Position;
-import net.glowstone.util.RayUtil;
 import net.glowstone.util.SoundUtil;
-import net.glowstone.util.loot.LootData;
-import net.glowstone.util.loot.LootingManager;
-import org.bukkit.EntityAnimation;
-import org.bukkit.EntityEffect;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.Sound;
-import org.bukkit.Statistic;
+import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Fireball;
-import org.bukkit.entity.HumanEntity;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Monster;
-import org.bukkit.entity.Player;
-import org.bukkit.entity.Projectile;
-import org.bukkit.event.entity.EntityAirChangeEvent;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.entity.*;
+import org.bukkit.event.entity.*;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
-import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.event.entity.EntityResurrectEvent;
-import org.bukkit.event.entity.EntityToggleGlideEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.entity.PlayerLeashEntityEvent;
-import org.bukkit.event.entity.ProjectileLaunchEvent;
-import org.bukkit.event.entity.SlimeSplitEvent;
 import org.bukkit.event.player.PlayerUnleashEntityEvent;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
-import org.bukkit.scoreboard.Criterias;
-import org.bukkit.scoreboard.Objective;
 import org.bukkit.util.BlockIterator;
 import org.bukkit.util.Vector;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
+
+import static java.lang.Math.cos;
+import static java.lang.Math.sin;
 
 /**
  * A GlowLivingEntity is a {@link Player} or {@link Monster}.
@@ -112,7 +71,7 @@ public abstract class GlowLivingEntity extends GlowEntity implements LivingEntit
      */
     @Getter
     @Setter
-    private int playerDamageTick = -101;
+    int playerDamageTick = -101;
 
     /**
      * Whether entities can collide with this entity.
@@ -256,6 +215,9 @@ public abstract class GlowLivingEntity extends GlowEntity implements LivingEntit
      */
     private int adjacentBurnTicks;
 
+    private HealthHandler healthHandler;
+    private DamageHandler damageHandler;
+
     /**
      * Creates a mob within the specified world.
      *
@@ -278,6 +240,8 @@ public abstract class GlowLivingEntity extends GlowEntity implements LivingEntit
         attributeManager.setProperty(Key.KEY_MAX_HEALTH, maxHealth);
         health = maxHealth;
         taskManager = new TaskManager(this);
+        healthHandler = new HealthHandler(this);
+        damageHandler = new DamageHandler(this);
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -740,7 +704,7 @@ public abstract class GlowLivingEntity extends GlowEntity implements LivingEntit
      * @return the launched projectile
      */
     public <T extends Projectile> T launchProjectile(Class<? extends T> type, Vector vector,
-            float offset, float speed) {
+                                                     float offset, float speed) {
         if (vector == null) {
             vector = getVelocity();
         }
@@ -764,7 +728,7 @@ public abstract class GlowLivingEntity extends GlowEntity implements LivingEntit
      * @return the launched projectile
      */
     protected <T extends Projectile> T launchProjectile(Class<? extends T> type, Location location,
-            Vector originalVector, float pitchOffset, float velocity) {
+                                                        Vector originalVector, float pitchOffset, float velocity) {
         double pitchRadians = Math.toRadians(location.getPitch());
         double yawRadians = Math.toRadians(location.getYaw());
 
@@ -792,7 +756,7 @@ public abstract class GlowLivingEntity extends GlowEntity implements LivingEntit
      * @return the newly launched projectile
      */
     private <T extends Projectile> T launchProjectile(Class<? extends T> type, Location location,
-            double x, double y, double z, float speed) {
+                                                      double x, double y, double z, float speed) {
         double magnitude = Math.sqrt(x * x + y * y + z * z);
         if (magnitude > 0) {
             x += (x * (speed - magnitude)) / magnitude;
@@ -818,258 +782,7 @@ public abstract class GlowLivingEntity extends GlowEntity implements LivingEntit
 
     @Override
     public void setHealth(double health) {
-        if (health < 0) {
-            health = 0;
-        }
-        if (health > getMaxHealth()) {
-            health = getMaxHealth();
-        }
-        this.health = health;
-        metadata.set(MetadataIndex.HEALTH, (float) health);
-        for (Objective objective : getServer().getScoreboardManager().getMainScoreboard()
-                .getObjectivesByCriteria(Criterias.HEALTH)) {
-            objective.getScore(getName()).setScore((int) health);
-        }
-        if (health > 0) {
-            return;
-        }
-
-        if (this.tryUseTotem()) {
-            return;
-        }
-
-        // Killed
-        active = false;
-        Sound deathSound = getDeathSound();
-        if (deathSound != null && !isSilent()) {
-            world.playSound(location, deathSound, getSoundVolume(), getSoundPitch());
-        }
-        playEffectKnownAndSelf(EntityEffect.DEATH);
-        if (this instanceof GlowPlayer) {
-            GlowPlayer player = (GlowPlayer) this;
-            List<ItemStack> items = null;
-            boolean dropInventory = !world.getGameRuleMap().getBoolean(GameRules.KEEP_INVENTORY);
-            if (dropInventory) {
-                items = Arrays.stream(player.getInventory().getContents())
-                        .filter(stack -> !InventoryUtil.isEmpty(stack))
-                        .collect(Collectors.toList());
-                player.getInventory().clear();
-            }
-            PlayerDeathEvent event = new PlayerDeathEvent(player, items, 0,
-                    player.getDisplayName() + " died.");
-            EventFactory.getInstance().callEvent(event);
-            server.broadcastMessage(event.getDeathMessage());
-            if (dropInventory) {
-                for (ItemStack item : items) {
-                    world.dropItemNaturally(getLocation(), item);
-                }
-            }
-            player.setShoulderEntityRight(null);
-            player.setShoulderEntityLeft(null);
-            player.incrementStatistic(Statistic.DEATHS);
-        } else {
-            EntityDeathEvent deathEvent = new EntityDeathEvent(this, new ArrayList<>());
-            if (world.getGameRuleMap().getBoolean(GameRules.DO_MOB_LOOT)) {
-                LootData data = LootingManager.generate(this);
-                deathEvent.getDrops().addAll(data.getItems());
-                // Only drop experience when hit by a player within 5 seconds (100 game ticks)
-                if (ticksLived - playerDamageTick <= 100 && data.getExperience() > 0) {
-                    ThreadLocalRandom random = ThreadLocalRandom.current();
-                    ExperienceSplitter.forEachCut(data.getExperience(), exp -> {
-                        double modX = random.nextDouble() - 0.5;
-                        double modZ = random.nextDouble() - 0.5;
-                        Location xpLocation = new Location(world,
-                                location.getBlockX() + 0.5 + modX, location.getY(),
-                                location.getBlockZ() + 0.5 + modZ);
-                        GlowExperienceOrb orb = (GlowExperienceOrb) world
-                                .spawnEntity(xpLocation, EntityType.EXPERIENCE_ORB);
-                        orb.setExperience(exp);
-                        orb.setSourceEntityId(this.getUniqueId());
-                        if (getLastDamager() != null) {
-                            orb.setTriggerEntityId(getLastDamager().getUniqueId());
-                        }
-                    });
-                }
-            }
-            deathEvent = EventFactory.getInstance().callEvent(deathEvent);
-            for (ItemStack item : deathEvent.getDrops()) {
-                world.dropItemNaturally(getLocation(), item);
-            }
-        }
-
-        // TODO: Add a die method to GlowEntity class and override in
-        // various subclasses depending on the actions needed to be run
-        // to help keep code maintainable
-        if (this instanceof GlowSlime) {
-            GlowSlime slime = (GlowSlime) this;
-
-            int size = slime.getSize();
-            if (size > 1) {
-                int count = 2 + ThreadLocalRandom.current().nextInt(3);
-
-                SlimeSplitEvent event = EventFactory.getInstance().callEvent(
-                        new SlimeSplitEvent(slime, count));
-                if (event.isCancelled() || event.getCount() <= 0) {
-                    return;
-                }
-
-                count = event.getCount();
-                for (int i = 0; i < count; ++i) {
-                    Location spawnLoc = getLocation().clone();
-                    spawnLoc.add(
-                            ThreadLocalRandom.current().nextDouble(0.5, 3),
-                            0,
-                            ThreadLocalRandom.current().nextDouble(0.5, 3)
-                    );
-
-                    GlowSlime splitSlime = (GlowSlime) world.spawnEntity(
-                            spawnLoc, EntityType.SLIME);
-
-                    // Make the split slime the same name as the killed slime.
-                    if (!getCustomName().isEmpty()) {
-                        splitSlime.setCustomName(getCustomName());
-                    }
-
-                    splitSlime.setSize(size / 2);
-                }
-            }
-        }
-    }
-
-    @Override
-    public void damage(double amount, Entity source, DamageCause cause) {
-        // invincibility timer
-        if (noDamageTicks > 0 || health <= 0 || !canTakeDamage(cause) || isInvulnerable()) {
-            return;
-        } else {
-            noDamageTicks = maximumNoDamageTicks;
-        }
-
-        // fire resistance
-        if (cause != null && hasPotionEffect(PotionEffectType.FIRE_RESISTANCE)) {
-            if (source instanceof Fireball) {
-                return;
-            } else {
-                switch (cause) {
-                    case FIRE:
-                    case FIRE_TICK:
-                    case HOT_FLOOR:
-                    case LAVA:
-                        return;
-                    default:
-                        // Not fire damage; continue
-                }
-            }
-        }
-
-        // armor damage protection
-        // formula source: http://minecraft.gamepedia.com/Armor#Damage_Protection
-        double defensePoints = getAttributeManager().getPropertyValue(Key.KEY_ARMOR);
-        double toughness = getAttributeManager().getPropertyValue(Key.KEY_ARMOR_TOUGHNESS);
-        amount = amount * (1 - Math.min(20.0,
-                Math.max(defensePoints / 5.0,
-                        defensePoints - amount / (2.0 + toughness / 4.0))) / 25);
-
-        // fire event
-        EntityDamageEvent event = EventFactory.getInstance().onEntityDamage(source == null
-                ? new EntityDamageEvent(this, cause, amount)
-                : new EntityDamageByEntityEvent(source, this, cause, amount));
-        if (event.isCancelled()) {
-            return;
-        }
-
-        // apply damage
-        amount = event.getFinalDamage();
-        lastDamage = amount;
-
-        if (isPlayerHit(source)) {
-            playerDamageTick = ticksLived;
-            if (health - amount <= 0) {
-                killer = determinePlayer(source);
-                if (killer != null) {
-                    killer.incrementStatistic(Statistic.KILL_ENTITY, getType());
-                }
-            }
-        }
-
-        setHealth(health - amount);
-        playEffectKnownAndSelf(EntityEffect.HURT);
-
-        if (cause == DamageCause.ENTITY_ATTACK && source != null) {
-            Vector distance = RayUtil
-                    .getRayBetween(getLocation(), ((LivingEntity) source).getEyeLocation());
-
-            Vector rayLength = RayUtil.getVelocityRay(distance).normalize();
-
-            Vector currentVelocity = getVelocity();
-            currentVelocity.add(rayLength.multiply(((amount + 1) / 2d)));
-            setVelocity(currentVelocity);
-        }
-
-        // play sounds, handle death
-        if (health > 0) {
-            Sound hurtSound = getHurtSound();
-            if (hurtSound != null && !isSilent()) {
-                world.playSound(location, hurtSound, getSoundVolume(), getSoundPitch());
-            }
-        }
-        setLastDamager(source);
-    }
-
-    /**
-     * Checks if the source of damage was caused by a player.
-     *
-     * @param source The source of damage
-     * @return true if the source of damage was caused by a player, false otherwise.
-     */
-    private boolean isPlayerHit(Entity source) {
-        // If directly damaged by a player
-        if (source instanceof GlowPlayer) {
-            return true;
-        }
-
-        // If damaged by a TNT ignited by a player
-        if (source instanceof GlowTntPrimed) {
-            GlowPlayer player = (GlowPlayer) ((GlowTntPrimed) source).getSource();
-            return
-                    player != null
-                            && (player.getGameMode() == GameMode.SURVIVAL
-                            || player.getGameMode() == GameMode.ADVENTURE);
-        }
-
-        // If damaged by a tamed wolf
-        if (source instanceof GlowWolf) {
-            return ((GlowWolf) source).isTamed();
-        }
-
-        // All other cases
-        return false;
-    }
-
-    /**
-     * Determines the player who did the damage from source of damage.
-     *
-     * @param source The incoming source of damage
-     * @return Player object if the source of damage was caused by a player, null otherwise.
-     */
-    private Player determinePlayer(Entity source) {
-        // If been killed by an ignited tnt
-        if (source instanceof GlowTntPrimed) {
-            return (Player) ((GlowTntPrimed) source).getSource();
-        }
-
-        // If been killed by a player
-        if (source instanceof GlowPlayer) {
-            return (Player) source;
-        }
-
-        // If been killed by a tamed wolf
-        if (source instanceof GlowWolf) {
-            return (Player) ((GlowWolf) source).getOwner();
-        }
-
-        // All other cases
-        return null;
+        healthHandler.setHealth(health);
     }
 
     @Override
@@ -1309,7 +1022,7 @@ public abstract class GlowLivingEntity extends GlowEntity implements LivingEntit
         } else if (!InventoryUtil.isEmpty(handItem) && handItem.getType() == Material.LEASH) {
             if (!GlowLeashHitch.isAllowedLeashHolder(this.getType()) || this.isLeashed()
                     || EventFactory.getInstance().callEvent(
-                            new PlayerLeashEntityEvent(this, player, player))
+                    new PlayerLeashEntityEvent(this, player, player))
                     .isCancelled()) {
                 return false;
             }
@@ -1332,9 +1045,10 @@ public abstract class GlowLivingEntity extends GlowEntity implements LivingEntit
 
     /**
      * Use "Totem of Undying" if equipped
+     *
      * @return result of totem use
      */
-    public boolean tryUseTotem() {
+    boolean tryUseTotem() {
         //TODO: Should return false if player die in void.
         if (!(this instanceof HumanEntity)) {
             return false;
@@ -1368,5 +1082,31 @@ public abstract class GlowLivingEntity extends GlowEntity implements LivingEntit
         playEffectKnownAndSelf(EntityEffect.TOTEM_RESURRECT);
 
         return true;
+    }
+
+    void playEffectKnownAndSelf(EntityEffect type) {
+        if (type.getApplicable().isInstance(this)) {
+            EntityStatusMessage message = new EntityStatusMessage(entityId, type);
+            if (this instanceof GlowPlayer) {
+                ((GlowPlayer) this).getSession().send(message);
+            }
+            world.getRawPlayers().stream().filter(player -> player.canSeeEntity(this))
+                    .forEach(player -> player.getSession().send(message));
+        }
+    }
+
+    @Override
+    public void damage(double rawAmount, Entity source, EntityDamageEvent.DamageCause cause) {
+        damageHandler.damage(rawAmount, source, cause);
+    }
+
+    @Override
+    public void damage(double rawAmount, EntityDamageEvent.DamageCause cause) {
+        damageHandler.damage(rawAmount, null, cause);
+    }
+
+    @Override
+    public void damage(double rawAmount) {
+        damage(rawAmount, DamageCause.CUSTOM);
     }
 }

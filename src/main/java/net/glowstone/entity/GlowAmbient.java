@@ -1,5 +1,6 @@
 package net.glowstone.entity;
 
+import net.glowstone.entity.livingentity.GlowLivingEntity;
 import org.bukkit.Location;
 import org.bukkit.entity.Ambient;
 

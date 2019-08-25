@@ -5,6 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
+import net.glowstone.entity.livingentity.GlowLivingEntity;
 import net.glowstone.net.message.play.entity.EntityHeadRotationMessage;
 import net.glowstone.net.message.play.entity.SpawnMobMessage;
 import net.glowstone.util.Position;

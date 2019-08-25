@@ -46,7 +46,7 @@ import net.glowstone.entity.EntityManager;
 import net.glowstone.entity.EntityRegistry;
 import net.glowstone.entity.GlowEntity;
 import net.glowstone.entity.GlowLightningStrike;
-import net.glowstone.entity.GlowLivingEntity;
+import net.glowstone.entity.livingentity.GlowLivingEntity;
 import net.glowstone.entity.GlowPlayer;
 import net.glowstone.entity.objects.GlowFallingBlock;
 import net.glowstone.entity.objects.GlowItem;

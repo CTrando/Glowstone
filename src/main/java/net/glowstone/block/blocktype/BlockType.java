@@ -1,10 +1,5 @@
 package net.glowstone.block.blocktype;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
 import lombok.Getter;
 import net.glowstone.EventFactory;
 import net.glowstone.block.GlowBlock;
@@ -13,6 +8,7 @@ import net.glowstone.block.ItemTable;
 import net.glowstone.block.entity.BlockEntity;
 import net.glowstone.block.itemtype.ItemType;
 import net.glowstone.chunk.GlowChunk;
+import net.glowstone.entity.livingentity.GlowLivingEntity;
 import net.glowstone.entity.GlowPlayer;
 import net.glowstone.entity.physics.BlockBoundingBox;
 import net.glowstone.i18n.ConsoleMessages;
@@ -33,6 +29,11 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.material.MaterialData;
 import org.bukkit.util.Vector;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Base class for specific types of blocks.
@@ -475,7 +476,7 @@ public class BlockType extends ItemType {
      * @param block  the block that was stepped on
      * @param entity the entity
      */
-    public void onEntityStep(GlowBlock block, LivingEntity entity) {
+    public void onEntityStep(GlowBlock block, GlowLivingEntity entity) {
         // do nothing
     }
 

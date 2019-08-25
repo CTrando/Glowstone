@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.UUID;
 import net.glowstone.EventFactory;
 import net.glowstone.GlowWorld;
-import net.glowstone.entity.GlowLivingEntity;
+import net.glowstone.entity.livingentity.GlowLivingEntity;
 import net.glowstone.entity.GlowPlayer;
 import net.glowstone.entity.meta.MetadataIndex;
 import net.glowstone.entity.meta.MetadataIndex.ArmorStandFlags;

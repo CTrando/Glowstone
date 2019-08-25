@@ -2,7 +2,7 @@ package net.glowstone.util.loot;
 
 import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
-import net.glowstone.entity.GlowLivingEntity;
+import net.glowstone.entity.livingentity.GlowLivingEntity;
 import net.glowstone.util.ReflectionProcessor;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;

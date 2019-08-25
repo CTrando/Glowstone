@@ -99,4 +99,6 @@ public abstract class GlowProjectile extends GlowEntity implements Projectile {
     public boolean doesBounce() {
         return bounce;
     }
+
+    public void damage() {}
 }

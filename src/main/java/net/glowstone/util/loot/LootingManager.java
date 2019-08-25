@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import net.glowstone.GlowServer;
-import net.glowstone.entity.GlowLivingEntity;
+import net.glowstone.entity.livingentity.GlowLivingEntity;
 import net.glowstone.util.InventoryUtil;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;

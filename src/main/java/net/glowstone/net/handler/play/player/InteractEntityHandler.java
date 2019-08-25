@@ -5,7 +5,7 @@ import net.glowstone.EventFactory;
 import net.glowstone.GlowServer;
 import net.glowstone.constants.AttackDamage;
 import net.glowstone.entity.GlowEntity;
-import net.glowstone.entity.GlowLivingEntity;
+import net.glowstone.entity.livingentity.GlowLivingEntity;
 import net.glowstone.entity.GlowPlayer;
 import net.glowstone.inventory.ToolType;
 import net.glowstone.net.GlowSession;

@@ -60,7 +60,7 @@ public class GlowEgg extends GlowProjectile implements Egg {
     public void collide(LivingEntity entity) {
         ProjectileSource source = getShooter();
         // the entity receives fake damage.
-        if (entity instanceof Entity) {
+        if (entity != null) {
             entity.damage(0, (Entity) source, EntityDamageEvent.DamageCause.PROJECTILE);
         } else {
             entity.damage(0, EntityDamageEvent.DamageCause.PROJECTILE);

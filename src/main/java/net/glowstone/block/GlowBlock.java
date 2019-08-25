@@ -1,11 +1,6 @@
 package net.glowstone.block;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ThreadLocalRandom;
+import com.flowpowered.network.Message;
 import lombok.Getter;
 import net.glowstone.GlowServer;
 import net.glowstone.GlowWorld;
@@ -31,6 +26,9 @@ import org.bukkit.metadata.MetadataStore;
 import org.bukkit.metadata.MetadataStoreBase;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.Plugin;
+
+import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Represents a single block in a world.

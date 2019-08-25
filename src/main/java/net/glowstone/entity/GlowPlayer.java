@@ -756,7 +756,7 @@ public class GlowPlayer extends GlowHumanEntity implements Player {
     public void damage(double amount, DamageCause cause) {
         // todo: better idea
         double old = getHealth();
-        super.damage(amount, cause);
+        super.damage(amount, null, cause);
         if (old != getHealth()) {
             addExhaustion(0.1f);
             sendHealth();

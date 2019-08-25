@@ -1,6 +1,6 @@
 package net.glowstone.entity.ai;
 
-import net.glowstone.entity.GlowLivingEntity;
+import net.glowstone.entity.livingentity.GlowLivingEntity;
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
 

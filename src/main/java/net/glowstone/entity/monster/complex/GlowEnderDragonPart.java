@@ -27,7 +27,7 @@ public class GlowEnderDragonPart extends GlowEntity implements EnderDragonPart {
 
     @Override
     public void damage(double amount) {
-        parent.damage(amount);
+        parent.damage(amount, this);
     }
 
     @Override

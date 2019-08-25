@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import net.glowstone.entity.livingentity.GlowLivingEntity;
 import net.glowstone.net.GlowSession;
 import net.glowstone.net.message.play.entity.EntityPropertyMessage;
 import org.bukkit.attribute.Attribute;

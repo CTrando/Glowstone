@@ -1,30 +1,17 @@
 package net.glowstone.entity;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import com.destroystokyo.paper.event.player.PlayerInitialSpawnEvent;
 import com.flowpowered.network.Message;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 import lombok.Getter;
 import lombok.Setter;
 import net.glowstone.EventFactory;
 import net.glowstone.GlowServer;
 import net.glowstone.GlowWorld;
 import net.glowstone.chunk.GlowChunk;
+import net.glowstone.entity.livingentity.GlowLivingEntity;
 import net.glowstone.entity.meta.MetadataIndex;
 import net.glowstone.entity.meta.MetadataIndex.StatusFlags;
 import net.glowstone.entity.meta.MetadataMap;
@@ -35,42 +22,19 @@ import net.glowstone.entity.objects.GlowPainting;
 import net.glowstone.entity.physics.BoundingBox;
 import net.glowstone.entity.physics.EntityBoundingBox;
 import net.glowstone.net.GlowSession;
-import net.glowstone.net.message.play.entity.AttachEntityMessage;
-import net.glowstone.net.message.play.entity.EntityMetadataMessage;
-import net.glowstone.net.message.play.entity.EntityRotationMessage;
-import net.glowstone.net.message.play.entity.EntityStatusMessage;
-import net.glowstone.net.message.play.entity.EntityTeleportMessage;
-import net.glowstone.net.message.play.entity.EntityVelocityMessage;
-import net.glowstone.net.message.play.entity.RelativeEntityPositionMessage;
-import net.glowstone.net.message.play.entity.RelativeEntityPositionRotationMessage;
-import net.glowstone.net.message.play.entity.SetPassengerMessage;
+import net.glowstone.net.message.play.entity.*;
 import net.glowstone.net.message.play.player.InteractEntityMessage;
 import net.glowstone.util.Position;
 import net.glowstone.util.UuidUtils;
-import org.bukkit.Chunk;
-import org.bukkit.EntityEffect;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.World.Environment;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.PistonMoveReaction;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
-import org.bukkit.entity.Projectile;
-import org.bukkit.entity.Vehicle;
-import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.entity.*;
+import org.bukkit.event.entity.*;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
-import org.bukkit.event.entity.EntityPortalEnterEvent;
-import org.bukkit.event.entity.EntityPortalEvent;
-import org.bukkit.event.entity.EntityPortalExitEvent;
-import org.bukkit.event.entity.EntityTeleportEvent;
-import org.bukkit.event.entity.EntityUnleashEvent;
 import org.bukkit.event.entity.EntityUnleashEvent.UnleashReason;
-import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.event.vehicle.VehicleEnterEvent;
 import org.bukkit.event.vehicle.VehicleExitEvent;
@@ -86,6 +50,12 @@ import org.bukkit.util.Vector;
 import org.spigotmc.event.entity.EntityDismountEvent;
 import org.spigotmc.event.entity.EntityMountEvent;
 import org.spigotmc.event.player.PlayerSpawnLocationEvent;
+
+import java.util.*;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Represents some entity in the world such as an item on the floor or a player.
@@ -112,6 +82,7 @@ public abstract class GlowEntity implements Entity {
     /**
      * The entity's metadata.
      */
+    @Setter
     protected final MetadataMap metadata = new MetadataMap(getClass());
     /**
      * The current position.
@@ -156,6 +127,7 @@ public abstract class GlowEntity implements Entity {
     /**
      * A flag indicating if this entity is currently active.
      */
+    @Setter
     protected boolean active = true;
     /**
      * This entity's current identifier for its world.
@@ -1179,17 +1151,6 @@ public abstract class GlowEntity implements Entity {
         }
     }
 
-    public void playEffectKnownAndSelf(EntityEffect type) {
-        if (type.getApplicable().isInstance(this)) {
-            EntityStatusMessage message = new EntityStatusMessage(entityId, type);
-            if (this instanceof GlowPlayer) {
-                ((GlowPlayer) this).getSession().send(message);
-            }
-            world.getRawPlayers().stream().filter(player -> player.canSeeEntity(this))
-                    .forEach(player -> player.getSession().send(message));
-        }
-    }
-
     @Override
     public EntityType getType() {
         return EntityType.UNKNOWN;
@@ -1430,20 +1391,20 @@ public abstract class GlowEntity implements Entity {
         bukkitMetadata.setMetadata(this, metadataKey, newMetadataValue);
     }
 
-    public void damage(double amount) {
-        damage(amount, null, DamageCause.CUSTOM);
+    //region Damage
+
+    /**
+     * Damage done by entity
+     */
+    public void damage(double amount, Entity source, DamageCause cause) {
+        // Actual damage implementation is done per subclass
     }
 
     public void damage(double amount, Entity source) {
         damage(amount, source, DamageCause.CUSTOM);
     }
 
-    public void damage(double amount, DamageCause cause) {
-        damage(amount, null, cause);
-    }
-
-    public void damage(double amount, Entity source, DamageCause cause) {
-    }
+    //endregion
 
     ////////////////////////////////////////////////////////////////////////////
     // Metadata

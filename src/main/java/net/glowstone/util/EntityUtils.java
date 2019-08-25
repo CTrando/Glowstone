@@ -62,7 +62,7 @@ public class EntityUtils {
             }
         } else if (type.equals(PotionEffectType.HARM)) {
             if (instantIntensity > 0.0) {
-                target.damage((3 << baseAmplifier) * instantIntensity,
+                target.damage((3 << baseAmplifier) * instantIntensity, null,
                         EntityDamageEvent.DamageCause.MAGIC);
             }
         } else if (type.isInstant()) {

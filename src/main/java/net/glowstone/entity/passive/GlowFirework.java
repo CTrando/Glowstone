@@ -167,7 +167,7 @@ public class GlowFirework extends GlowEntity implements Firework, Summonable {
             int effectsSize = getFireworkMeta().getEffectsSize();
             if (effectsSize > 0) {
                 if (boostedEntity != null) {
-                    boostedEntity.damage((5 + effectsSize * 2), DamageCause.ENTITY_EXPLOSION);
+                    boostedEntity.damage((5 + effectsSize * 2), this, DamageCause.ENTITY_EXPLOSION);
                 }
 
                 List<Entity> nearbyEntities = this.getNearbyEntities(2.5, 2.5, 2.5);
@@ -182,7 +182,7 @@ public class GlowFirework extends GlowEntity implements Firework, Summonable {
                     // "The explosion of firework rockets deals 2.5 hearts of damage, per firework
                     // star."
                     ((LivingEntity) nearbyEntity)
-                        .damage((effectsSize * 5), DamageCause.ENTITY_EXPLOSION);
+                        .damage((effectsSize * 5), this, DamageCause.ENTITY_EXPLOSION);
                 }
             }
         }

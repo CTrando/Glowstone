@@ -2,7 +2,7 @@ package net.glowstone.entity.ai;
 
 import java.util.concurrent.ThreadLocalRandom;
 import lombok.Getter;
-import net.glowstone.entity.GlowLivingEntity;
+import net.glowstone.entity.livingentity.GlowLivingEntity;
 import org.jetbrains.annotations.NonNls;
 
 public abstract class EntityTask implements Comparable<EntityTask> {
